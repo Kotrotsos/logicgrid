@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import { generatePuzzle, getHint } from './services/geminiService';
+import { exportPuzzle } from './services/exportService';
 import { PuzzleData, GameState, GridState, View, CellValue, Difficulty, GridSize, PuzzleType, GRID_PRESETS } from './types';
 import { LogicGrid } from './components/LogicGrid';
 import { Clues } from './components/Clues';
@@ -330,6 +331,9 @@ export default function App() {
             </Button>
             <Button variant="secondary" onClick={() => window.print()} title="Print">
                <span className="material-symbols-outlined">print</span>
+            </Button>
+            <Button variant="secondary" onClick={() => state.puzzle && exportPuzzle(state.puzzle, state.grid)} title="Export SVG + Markdown">
+               <span className="material-symbols-outlined">download</span>
             </Button>
             <Button variant="ghost" className="text-amber-600 hover:bg-amber-50" onClick={handleRevealSolution} title="Reveal Solution">
                <span className="material-symbols-outlined">lightbulb_circle</span>
