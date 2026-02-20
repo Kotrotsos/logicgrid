@@ -107,79 +107,19 @@ function gameReducer(state: GameState, action: Action): GameState {
   }
 }
 
-// --- Solution Normalization ---
+// --- Solution Helpers ---
 
-const normalize = (str: string) => str ? str.trim().toLowerCase() : '';
+// Safe string comparison: coerce to string, trim, lowercase
+const eq = (a: unknown, b: unknown): boolean =>
+  String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
 
-/**
- * Normalizes solution keys and values to exactly match category names and items.
- * This runs once when a puzzle loads, so checkRelationship can use simple === lookups.
- */
-function normalizeSolution(
-  solution: Record<string, string>[],
-  categories: { name: string; items: string[] }[]
-): Record<string, string>[] {
-  // Build a map from normalized category name -> exact category name
-  const catNameMap = new Map<string, string>();
-  const catItemsMap = new Map<string, string[]>(); // exact cat name -> items
-
-  for (const cat of categories) {
-    catNameMap.set(normalize(cat.name), cat.name);
-    catItemsMap.set(cat.name, cat.items);
-  }
-
-  return solution.map(row => {
-    const normalized: Record<string, string> = {};
-
-    for (const [rawKey, rawValue] of Object.entries(row)) {
-      // Step 1: Map the key to an exact category name
-      let exactCatName: string | undefined;
-
-      // Try exact match
-      if (categories.some(c => c.name === rawKey)) {
-        exactCatName = rawKey;
-      }
-
-      // Try case-insensitive match
-      if (!exactCatName) {
-        exactCatName = catNameMap.get(normalize(rawKey));
-      }
-
-      // Try value-in-items fallback: if the key doesn't match any category,
-      // check if the raw value belongs to a category's items
-      if (!exactCatName) {
-        for (const cat of categories) {
-          const normVal = normalize(rawValue);
-          if (cat.items.some(item => normalize(item) === normVal)) {
-            exactCatName = cat.name;
-            break;
-          }
-        }
-      }
-
-      if (!exactCatName) continue; // Skip unmatchable keys
-
-      // Step 2: Map the value to an exact item in that category
-      const items = catItemsMap.get(exactCatName) || [];
-      let exactItem = rawValue;
-
-      // Exact match
-      if (items.includes(rawValue)) {
-        exactItem = rawValue;
-      } else {
-        // Case-insensitive match
-        const normRawVal = normalize(rawValue);
-        const found = items.find(item => normalize(item) === normRawVal);
-        if (found) {
-          exactItem = found;
-        }
-      }
-
-      normalized[exactCatName] = exactItem;
-    }
-
-    return normalized;
-  });
+// Find the value for a category in a solution row (case-insensitive key match)
+function findInRow(row: Record<string, unknown>, categoryName: string): unknown | undefined {
+  // Exact key match first
+  if (categoryName in row) return row[categoryName];
+  // Case-insensitive key match
+  const key = Object.keys(row).find(k => eq(k, categoryName));
+  return key !== undefined ? row[key] : undefined;
 }
 
 export default function App() {
@@ -201,10 +141,6 @@ export default function App() {
       const gs = gridSize || GRID_PRESETS[1];
       const pt = puzzleType || 'standard';
       const puzzle = await generatePuzzle(topic, difficulty, gs, pt);
-
-      // Normalize solution keys/values to match categories exactly
-      puzzle.solution = normalizeSolution(puzzle.solution, puzzle.categories);
-
       dispatch({ type: 'SET_PUZZLE', payload: puzzle });
       setView(View.PUZZLE);
     } catch (e) {
@@ -232,14 +168,19 @@ export default function App() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Simple exact-match relationship check using normalized solution
+  // Robust relationship check: case-insensitive, type-coercing, no substring matching
   const checkRelationship = (catA: string, itemA: string, catB: string, itemB: string): boolean => {
       if (!state.puzzle) return false;
 
-      const solutionRow = state.puzzle.solution.find(row => row[catA] === itemA);
+      const solutionRow = state.puzzle.solution.find(row => {
+          const val = findInRow(row, catA);
+          return val !== undefined && eq(val, itemA);
+      });
+
       if (!solutionRow) return false;
 
-      return solutionRow[catB] === itemB;
+      const valB = findInRow(solutionRow, catB);
+      return valB !== undefined && eq(valB, itemB);
   };
 
   const handleCheckSolution = () => {
