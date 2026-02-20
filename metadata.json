@@ -1,0 +1,5 @@
+{
+  "name": "LogicGrid AI",
+  "description": "Generate and solve logic grid puzzles on any topic using Gemini AI.",
+  "requestFramePermissions": []
+}
