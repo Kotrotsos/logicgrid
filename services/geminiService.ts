@@ -82,9 +82,9 @@ Rules:
 4. No clue should be redundant, every clue must contribute at least one new deduction.
 
 CRITICAL requirements for the solution:
-- The solution is an array of exactly ${itemCount} objects (one per row).
-- Each object must have exactly ${categoryCount} keys, one for each category.
-- The keys in the solution objects MUST match the category "name" fields EXACTLY (same spelling, same case).
+- The solution is an array of exactly ${itemCount} rows.
+- Each row is an array of exactly ${categoryCount} strings, one item per category, in the SAME ORDER as the categories array.
+- The first string in each row corresponds to the first category, the second to the second category, etc.
 - Each item from each category must appear in exactly one solution row.
 
 The "goal" field must start with "Determine" and describe what the solver needs to figure out.
@@ -102,10 +102,10 @@ Example of correct output structure (for a 4-category, 4-item puzzle):
   ],
   "clues": ["Alice did not visit in January.", "The person who went hiking visited Central Park."],
   "solution": [
-    {"Person": "Alice", "Park": "Hyde", "Activity": "Swimming", "Month": "March"},
-    {"Person": "Bob", "Park": "Central", "Activity": "Hiking", "Month": "January"},
-    {"Person": "Carol", "Park": "Golden Gate", "Activity": "Reading", "Month": "October"},
-    {"Person": "Dave", "Park": "Yosemite", "Activity": "Cycling", "Month": "June"}
+    ["Alice", "Hyde", "Swimming", "March"],
+    ["Bob", "Central", "Hiking", "January"],
+    ["Carol", "Golden Gate", "Reading", "October"],
+    ["Dave", "Yosemite", "Cycling", "June"]
   ]
 }`;
 
@@ -144,10 +144,11 @@ Example of correct output structure (for a 4-category, 4-item puzzle):
             },
             solution: {
               type: Type.ARRAY,
-              description: `Exactly ${itemCount} solution rows. Each row is an object whose keys are the category names and values are the matching items.`,
+              description: `Exactly ${itemCount} solution rows. Each row is an array of ${categoryCount} strings, one per category in order.`,
               items: {
-                type: Type.OBJECT,
-                description: "One solution row with a key for each category name mapping to the correct item."
+                type: Type.ARRAY,
+                description: `Array of ${categoryCount} item strings, in the same order as the categories array.`,
+                items: { type: Type.STRING }
               }
             }
           }
@@ -162,30 +163,43 @@ Example of correct output structure (for a 4-category, 4-item puzzle):
         jsonString = jsonString.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
       }
 
-      const data = JSON.parse(jsonString) as PuzzleData;
+      const raw = JSON.parse(jsonString);
 
       // Validation to ensure the grid logic won't break
-      if (!data || !data.categories || !Array.isArray(data.categories)) {
+      if (!raw || !raw.categories || !Array.isArray(raw.categories)) {
           throw new Error("Invalid response: Categories array is missing.");
       }
 
-      if (data.categories.length !== categoryCount) {
-        throw new Error(`Invalid category count: ${data.categories.length}. Must be ${categoryCount}.`);
+      if (raw.categories.length !== categoryCount) {
+        throw new Error(`Invalid category count: ${raw.categories.length}. Must be ${categoryCount}.`);
       }
 
-      if (data.categories.some(c => !c.items || !Array.isArray(c.items) || c.items.length !== itemCount)) {
+      if (raw.categories.some((c: any) => !c.items || !Array.isArray(c.items) || c.items.length !== itemCount)) {
          throw new Error(`Invalid item count. Must be ${itemCount} per category.`);
       }
 
       // Ensure clues exist
-      if (!data.clues) {
-          data.clues = [];
+      if (!raw.clues) {
+          raw.clues = [];
       }
 
       // Ensure solution exists
-      if (!data.solution) {
+      if (!raw.solution || !Array.isArray(raw.solution) || raw.solution.length === 0) {
           throw new Error("Invalid response: Solution array is missing.");
       }
+
+      // Convert solution from array-of-arrays to array-of-objects
+      // Each inner array has items in category order: [cat0Item, cat1Item, ...]
+      const solutionRows: string[][] = raw.solution;
+      raw.solution = solutionRows.map((row: string[]) => {
+          const obj: Record<string, string> = {};
+          raw.categories.forEach((cat: any, i: number) => {
+              obj[cat.name] = String(row[i] ?? '');
+          });
+          return obj;
+      });
+
+      const data = raw as PuzzleData;
 
       // Ensure goal exists
       if (!data.goal) {

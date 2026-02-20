@@ -109,18 +109,7 @@ function gameReducer(state: GameState, action: Action): GameState {
 
 // --- Solution Helpers ---
 
-// Safe string comparison: coerce to string, trim, lowercase
-const eq = (a: unknown, b: unknown): boolean =>
-  String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
-
-// Find the value for a category in a solution row (case-insensitive key match)
-function findInRow(row: Record<string, unknown>, categoryName: string): unknown | undefined {
-  // Exact key match first
-  if (categoryName in row) return row[categoryName];
-  // Case-insensitive key match
-  const key = Object.keys(row).find(k => eq(k, categoryName));
-  return key !== undefined ? row[key] : undefined;
-}
+const norm = (v: unknown) => String(v ?? '').trim().toLowerCase();
 
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
@@ -168,19 +157,41 @@ export default function App() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Robust relationship check: case-insensitive, type-coercing, no substring matching
+  // Check if two items belong to the same solution row
   const checkRelationship = (catA: string, itemA: string, catB: string, itemB: string): boolean => {
       if (!state.puzzle) return false;
 
-      const solutionRow = state.puzzle.solution.find(row => {
-          const val = findInRow(row, catA);
-          return val !== undefined && eq(val, itemA);
-      });
+      const nA = norm(itemA);
+      const nB = norm(itemB);
 
-      if (!solutionRow) return false;
+      // Strategy 1: key-based lookup (match category name to key, then compare value)
+      for (const row of state.puzzle.solution) {
+          // Find value for catA in this row
+          let valA: unknown;
+          if (catA in row) valA = row[catA];
+          else {
+              const k = Object.keys(row).find(k => norm(k) === norm(catA));
+              if (k) valA = row[k];
+          }
+          if (valA === undefined || norm(valA) !== nA) continue;
 
-      const valB = findInRow(solutionRow, catB);
-      return valB !== undefined && eq(valB, itemB);
+          // Found the row, now check catB
+          let valB: unknown;
+          if (catB in row) valB = row[catB];
+          else {
+              const k = Object.keys(row).find(k => norm(k) === norm(catB));
+              if (k) valB = row[k];
+          }
+          return valB !== undefined && norm(valB) === nB;
+      }
+
+      // Strategy 2: value-only (ignore keys, just check if both values co-occur in a row)
+      for (const row of state.puzzle.solution) {
+          const vals = Object.values(row).map(norm);
+          if (vals.includes(nA) && vals.includes(nB)) return true;
+      }
+
+      return false;
   };
 
   const handleCheckSolution = () => {
@@ -219,6 +230,15 @@ export default function App() {
       if (!state.puzzle) return;
       if (!window.confirm("Are you sure you want to reveal the solution? This will finish the game.")) return;
 
+      // Debug: dump solution data to console
+      console.log('[LogicGrid] Categories:', state.puzzle.categories.map(c => c.name));
+      console.log('[LogicGrid] Solution:', JSON.stringify(state.puzzle.solution, null, 2));
+      if (state.puzzle.solution.length > 0) {
+          const row0 = state.puzzle.solution[0];
+          console.log('[LogicGrid] Row 0 keys:', Object.keys(row0));
+          console.log('[LogicGrid] Row 0 value types:', Object.entries(row0).map(([k, v]) => `${k}: ${typeof v}`));
+      }
+
       const newGrid: GridState = {};
       const { categories } = state.puzzle;
 
@@ -237,6 +257,10 @@ export default function App() {
                   }
               }
           }
+
+          const trueCount = Object.values(newGrid).filter(v => v === 'true').length;
+          console.log(`[LogicGrid] Reveal result: ${trueCount} true, ${Object.keys(newGrid).length - trueCount} false`);
+
           dispatch({ type: 'SOLVE', payload: newGrid });
       } catch (e) {
           console.error("Reveal failed", e);
