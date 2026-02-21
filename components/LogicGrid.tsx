@@ -111,9 +111,12 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
   const CELL_SIZE = Math.max(34, Math.ceil(maxLeftItemWidth / 5));
   const GROUP_SIZE = CELL_SIZE * ITEM_COUNT;
 
+  // Padding so thick border strokes at edges aren't clipped
+  const PAD = Math.ceil(gs.borderThickness / 2);
+
   // Total content dimensions
-  const CONTENT_WIDTH = LABEL_SIZE + (blockColCount * GROUP_SIZE);
-  const CONTENT_HEIGHT = HEADER_HEIGHT + TOP_LABEL_HEIGHT + (blockRowCount * GROUP_SIZE);
+  const CONTENT_WIDTH = 2 * PAD + LABEL_SIZE + (blockColCount * GROUP_SIZE);
+  const CONTENT_HEIGHT = 2 * PAD + HEADER_HEIGHT + TOP_LABEL_HEIGHT + (blockRowCount * GROUP_SIZE);
 
   // Build a set for quick block existence checks
   const blockSet = new Set<string>();
@@ -168,8 +171,8 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
 
     ctx.textBaseline = 'middle';
 
-    const gridOffsetX = LABEL_SIZE;
-    const gridOffsetY = HEADER_HEIGHT + TOP_LABEL_HEIGHT;
+    const gridOffsetX = PAD + LABEL_SIZE;
+    const gridOffsetY = PAD + HEADER_HEIGHT + TOP_LABEL_HEIGHT;
 
     // 1. Fill entire background with neutral color for the staircase area
     ctx.fillStyle = gs.backgroundColor;
@@ -178,30 +181,30 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
     // 2. Top-left logo area
     if (gs.showLogo) {
       ctx.fillStyle = '#10221a';
-      ctx.fillRect(0, 0, LABEL_SIZE, HEADER_HEIGHT);
+      ctx.fillRect(PAD, PAD, LABEL_SIZE, HEADER_HEIGHT);
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 12px Inter, sans-serif';
-      ctx.fillText('LOGICGRID', LABEL_SIZE / 2, HEADER_HEIGHT / 2);
+      ctx.fillText('LOGICGRID', PAD + LABEL_SIZE / 2, PAD + HEADER_HEIGHT / 2);
     } else {
       ctx.fillStyle = gs.backgroundColor;
-      ctx.fillRect(0, 0, LABEL_SIZE, HEADER_HEIGHT);
+      ctx.fillRect(PAD, PAD, LABEL_SIZE, HEADER_HEIGHT);
     }
 
     // 3. Top category headers
     topCats.forEach((cat, i) => {
       const x = gridOffsetX + (i * GROUP_SIZE);
       ctx.fillStyle = gs.headerColor;
-      ctx.fillRect(x, 0, GROUP_SIZE, HEADER_HEIGHT);
+      ctx.fillRect(x, PAD, GROUP_SIZE, HEADER_HEIGHT);
 
       ctx.strokeStyle = gs.borderColor;
       ctx.lineWidth = gs.borderThickness;
-      ctx.strokeRect(x, 0, GROUP_SIZE, HEADER_HEIGHT);
+      ctx.strokeRect(x, PAD, GROUP_SIZE, HEADER_HEIGHT);
 
       ctx.fillStyle = '#334155';
       ctx.font = 'bold 12px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(cat.name.toUpperCase(), x + GROUP_SIZE / 2, HEADER_HEIGHT / 2);
+      ctx.fillText(cat.name.toUpperCase(), x + GROUP_SIZE / 2, PAD + HEADER_HEIGHT / 2);
     });
 
     // 4. Top item labels (rotated)
@@ -209,7 +212,7 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
       cat.items.forEach((item, itemIdx) => {
         const colIndex = (catIdx * ITEM_COUNT) + itemIdx;
         const x = gridOffsetX + (colIndex * CELL_SIZE);
-        const y = HEADER_HEIGHT;
+        const y = PAD + HEADER_HEIGHT;
 
         ctx.fillStyle = gs.cellColor;
         ctx.fillRect(x, y, CELL_SIZE, TOP_LABEL_HEIGHT);
@@ -234,12 +237,12 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
       const groupX = gridOffsetX + (catIdx * GROUP_SIZE);
       ctx.strokeStyle = gs.borderColor;
       ctx.lineWidth = gs.borderThickness;
-      ctx.strokeRect(groupX, HEADER_HEIGHT, GROUP_SIZE, TOP_LABEL_HEIGHT);
+      ctx.strokeRect(groupX, PAD + HEADER_HEIGHT, GROUP_SIZE, TOP_LABEL_HEIGHT);
     });
 
     // 5. Fill the top-left blank area below headers but above grid
     ctx.fillStyle = gs.backgroundColor;
-    ctx.fillRect(0, HEADER_HEIGHT, LABEL_SIZE, TOP_LABEL_HEIGHT);
+    ctx.fillRect(PAD, PAD + HEADER_HEIGHT, LABEL_SIZE, TOP_LABEL_HEIGHT);
 
     // 6. Left category headers + item labels
     leftCats.forEach((cat, catIdx) => {
@@ -251,10 +254,10 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
 
       // Category label (vertical)
       ctx.fillStyle = gs.headerColor;
-      ctx.fillRect(0, catY, leftCatLabelWidth, GROUP_SIZE);
+      ctx.fillRect(PAD, catY, leftCatLabelWidth, GROUP_SIZE);
 
       ctx.save();
-      ctx.translate(leftCatLabelWidth / 2, catY + GROUP_SIZE / 2);
+      ctx.translate(PAD + leftCatLabelWidth / 2, catY + GROUP_SIZE / 2);
       ctx.rotate(-Math.PI / 2);
       ctx.textAlign = 'center';
       ctx.fillStyle = '#64748b';
@@ -264,13 +267,13 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
 
       ctx.strokeStyle = gs.borderColor;
       ctx.lineWidth = gs.borderThickness;
-      ctx.strokeRect(0, catY, leftCatLabelWidth, GROUP_SIZE);
+      ctx.strokeRect(PAD, catY, leftCatLabelWidth, GROUP_SIZE);
 
       // Item labels
+      const itemX = PAD + leftCatLabelWidth;
+      const itemWidth = LABEL_SIZE - leftCatLabelWidth;
       cat.items.forEach((item, itemIdx) => {
         const itemY = catY + (itemIdx * CELL_SIZE);
-        const itemX = leftCatLabelWidth;
-        const itemWidth = LABEL_SIZE - leftCatLabelWidth;
 
         ctx.fillStyle = gs.cellColor;
         ctx.fillRect(itemX, itemY, itemWidth, CELL_SIZE);
@@ -290,7 +293,7 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
 
       ctx.strokeStyle = gs.borderColor;
       ctx.lineWidth = gs.borderThickness;
-      ctx.strokeRect(leftCatLabelWidth, catY, LABEL_SIZE - leftCatLabelWidth, GROUP_SIZE);
+      ctx.strokeRect(itemX, catY, itemWidth, GROUP_SIZE);
     });
 
     // 7. Hover highlight
@@ -306,10 +309,10 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
         // Highlight top label
         const topColIdx = hoverCell.blockCol * ITEM_COUNT + hoverCell.cellCol;
         ctx.fillStyle = 'rgba(43, 238, 157, 0.1)';
-        ctx.fillRect(gridOffsetX + topColIdx * CELL_SIZE, HEADER_HEIGHT, CELL_SIZE, TOP_LABEL_HEIGHT);
+        ctx.fillRect(gridOffsetX + topColIdx * CELL_SIZE, PAD + HEADER_HEIGHT, CELL_SIZE, TOP_LABEL_HEIGHT);
 
         // Highlight left label
-        ctx.fillRect(leftCatLabelWidth, gridOffsetY + hoverCell.blockRow * GROUP_SIZE + hoverCell.cellRow * CELL_SIZE, LABEL_SIZE - leftCatLabelWidth, CELL_SIZE);
+        ctx.fillRect(PAD + leftCatLabelWidth, gridOffsetY + hoverCell.blockRow * GROUP_SIZE + hoverCell.cellRow * CELL_SIZE, LABEL_SIZE - leftCatLabelWidth, CELL_SIZE);
       }
     }
 
@@ -395,11 +398,11 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
     const worldX = (mouseX - transform.x) / transform.k;
     const worldY = (mouseY - transform.y) / transform.k;
 
-    const gridOffsetX = LABEL_SIZE;
-    const gridOffsetY = HEADER_HEIGHT + TOP_LABEL_HEIGHT;
+    const hitGridOffsetX = PAD + LABEL_SIZE;
+    const hitGridOffsetY = PAD + HEADER_HEIGHT + TOP_LABEL_HEIGHT;
 
-    const relX = worldX - gridOffsetX;
-    const relY = worldY - gridOffsetY;
+    const relX = worldX - hitGridOffsetX;
+    const relY = worldY - hitGridOffsetY;
 
     if (relX < 0 || relY < 0) return null;
 
