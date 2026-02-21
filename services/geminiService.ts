@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PuzzleData, Difficulty, GridSize, PuzzleType, GRID_PRESETS } from "../types";
 
-const API_KEY = "***REMOVED***";
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 const DEFAULT_GRID_SIZE = GRID_PRESETS[1]; // 4x4 Classic
 
