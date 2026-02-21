@@ -152,6 +152,7 @@ export function generateSVG(
     els.push(`<text x="${LABEL_SIZE / 2}" y="${HEADER_HEIGHT / 2}" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="12" font-weight="bold">LOGICGRID</text>`);
   } else {
     els.push(`<rect x="0" y="0" width="${LABEL_SIZE}" height="${HEADER_HEIGHT}" fill="${backgroundColor}"/>`);
+    els.push(`<rect x="0" y="0" width="${LABEL_SIZE}" height="${HEADER_HEIGHT}" fill="none" stroke="${borderColor}" stroke-width="${bt}"/>`);
   }
 
   // 3. Blank area below logo
