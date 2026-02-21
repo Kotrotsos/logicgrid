@@ -1,5 +1,27 @@
 import { PuzzleData, Category, GridState } from '../types';
 
+// --- Export Settings ---
+
+export interface ExportSettings {
+  borderThickness: number;
+  showLogo: boolean;
+  backgroundColor: string;
+  cellColor: string;
+  headerColor: string;
+  borderColor: string;
+  cellBorderColor: string;
+}
+
+export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
+  borderThickness: 2,
+  showLogo: true,
+  backgroundColor: '#f1f5f9',
+  cellColor: '#ffffff',
+  headerColor: '#f1f5f9',
+  borderColor: '#1e293b',
+  cellBorderColor: '#e2e8f0',
+};
+
 // --- Download Helper ---
 
 function downloadFile(content: string, filename: string, mimeType: string) {
@@ -105,10 +127,15 @@ function escapeXml(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
-export function generateSVG(categories: Category[], gridState: GridState): string {
+export function generateSVG(
+  categories: Category[],
+  gridState: GridState,
+  settings: ExportSettings = DEFAULT_EXPORT_SETTINGS,
+): string {
+  const { borderThickness, showLogo, backgroundColor, cellColor, headerColor, borderColor, cellBorderColor } = settings;
+
   const ITEM_COUNT = categories[0].items.length;
   const HEADER_HEIGHT = 40;
-  const FONT = '11px Inter, sans-serif';
   const BOLD_FONT = 'bold 11px Inter, sans-serif';
 
   const layout = computeLShapeLayout(categories);
@@ -132,26 +159,32 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
   const gridOffsetX = LABEL_SIZE;
   const gridOffsetY = HEADER_HEIGHT + TOP_LABEL_HEIGHT;
 
+  const bt = borderThickness; // shorthand
+
   const els: string[] = [];
 
   // SVG header
   els.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CONTENT_WIDTH} ${CONTENT_HEIGHT}" width="${CONTENT_WIDTH}" height="${CONTENT_HEIGHT}" font-family="Inter, sans-serif">`);
 
   // 1. Background
-  els.push(`<rect x="0" y="0" width="${CONTENT_WIDTH}" height="${CONTENT_HEIGHT}" fill="#f1f5f9"/>`);
+  els.push(`<rect x="0" y="0" width="${CONTENT_WIDTH}" height="${CONTENT_HEIGHT}" fill="${backgroundColor}"/>`);
 
-  // 2. Logo box
-  els.push(`<rect x="0" y="0" width="${LABEL_SIZE}" height="${HEADER_HEIGHT}" fill="#10221a"/>`);
-  els.push(`<text x="${LABEL_SIZE / 2}" y="${HEADER_HEIGHT / 2}" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="12" font-weight="bold">LOGICGRID</text>`);
+  // 2. Logo box (conditional)
+  if (showLogo) {
+    els.push(`<rect x="0" y="0" width="${LABEL_SIZE}" height="${HEADER_HEIGHT}" fill="#10221a"/>`);
+    els.push(`<text x="${LABEL_SIZE / 2}" y="${HEADER_HEIGHT / 2}" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="12" font-weight="bold">LOGICGRID</text>`);
+  } else {
+    els.push(`<rect x="0" y="0" width="${LABEL_SIZE}" height="${HEADER_HEIGHT}" fill="${backgroundColor}"/>`);
+  }
 
   // 3. Blank area below logo
-  els.push(`<rect x="0" y="${HEADER_HEIGHT}" width="${LABEL_SIZE}" height="${TOP_LABEL_HEIGHT}" fill="#f1f5f9"/>`);
+  els.push(`<rect x="0" y="${HEADER_HEIGHT}" width="${LABEL_SIZE}" height="${TOP_LABEL_HEIGHT}" fill="${backgroundColor}"/>`);
 
   // 4. Top category headers
   topCats.forEach((cat, i) => {
     const x = gridOffsetX + i * GROUP_SIZE;
-    els.push(`<rect x="${x}" y="0" width="${GROUP_SIZE}" height="${HEADER_HEIGHT}" fill="#f1f5f9"/>`);
-    els.push(`<rect x="${x}" y="0" width="${GROUP_SIZE}" height="${HEADER_HEIGHT}" fill="none" stroke="#1e293b" stroke-width="2"/>`);
+    els.push(`<rect x="${x}" y="0" width="${GROUP_SIZE}" height="${HEADER_HEIGHT}" fill="${headerColor}"/>`);
+    els.push(`<rect x="${x}" y="0" width="${GROUP_SIZE}" height="${HEADER_HEIGHT}" fill="none" stroke="${borderColor}" stroke-width="${bt}"/>`);
     els.push(`<text x="${x + GROUP_SIZE / 2}" y="${HEADER_HEIGHT / 2}" text-anchor="middle" dominant-baseline="central" fill="#334155" font-size="12" font-weight="bold">${escapeXml(cat.name.toUpperCase())}</text>`);
   });
 
@@ -162,21 +195,17 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
       const x = gridOffsetX + colIndex * CELL_SIZE;
       const y = HEADER_HEIGHT;
 
-      // White background
-      els.push(`<rect x="${x}" y="${y}" width="${CELL_SIZE}" height="${TOP_LABEL_HEIGHT}" fill="#ffffff"/>`);
+      els.push(`<rect x="${x}" y="${y}" width="${CELL_SIZE}" height="${TOP_LABEL_HEIGHT}" fill="${cellColor}"/>`);
 
-      // Rotated text
       const tx = x + CELL_SIZE / 2;
       const ty = y + TOP_LABEL_HEIGHT - 12;
       els.push(`<text transform="rotate(-90 ${tx} ${ty})" x="${tx}" y="${ty}" text-anchor="start" dominant-baseline="central" fill="#475569" font-size="11" font-weight="bold">${escapeXml(item)}</text>`);
 
-      // Thin vertical divider
-      els.push(`<line x1="${x + CELL_SIZE}" y1="${y}" x2="${x + CELL_SIZE}" y2="${y + TOP_LABEL_HEIGHT}" stroke="#e2e8f0" stroke-width="1"/>`);
+      els.push(`<line x1="${x + CELL_SIZE}" y1="${y}" x2="${x + CELL_SIZE}" y2="${y + TOP_LABEL_HEIGHT}" stroke="${cellBorderColor}" stroke-width="1"/>`);
     });
 
-    // Thick group border
     const groupX = gridOffsetX + catIdx * GROUP_SIZE;
-    els.push(`<rect x="${groupX}" y="${HEADER_HEIGHT}" width="${GROUP_SIZE}" height="${TOP_LABEL_HEIGHT}" fill="none" stroke="#1e293b" stroke-width="2"/>`);
+    els.push(`<rect x="${groupX}" y="${HEADER_HEIGHT}" width="${GROUP_SIZE}" height="${TOP_LABEL_HEIGHT}" fill="none" stroke="${borderColor}" stroke-width="${bt}"/>`);
   });
 
   // 6. Left category headers + item labels
@@ -185,35 +214,25 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
     const colsInRow = blockColCount - catIdx;
     if (colsInRow <= 0) return;
 
-    // Category label background
-    els.push(`<rect x="0" y="${catY}" width="${leftCatLabelWidth}" height="${GROUP_SIZE}" fill="#f1f5f9"/>`);
+    els.push(`<rect x="0" y="${catY}" width="${leftCatLabelWidth}" height="${GROUP_SIZE}" fill="${headerColor}"/>`);
 
-    // Rotated category name
     const cx = leftCatLabelWidth / 2;
     const cy = catY + GROUP_SIZE / 2;
     els.push(`<text transform="rotate(-90 ${cx} ${cy})" x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#64748b" font-size="11" font-weight="bold">${escapeXml(cat.name.toUpperCase())}</text>`);
 
-    // Category label border
-    els.push(`<rect x="0" y="${catY}" width="${leftCatLabelWidth}" height="${GROUP_SIZE}" fill="none" stroke="#1e293b" stroke-width="2"/>`);
+    els.push(`<rect x="0" y="${catY}" width="${leftCatLabelWidth}" height="${GROUP_SIZE}" fill="none" stroke="${borderColor}" stroke-width="${bt}"/>`);
 
-    // Item labels
     cat.items.forEach((item, itemIdx) => {
       const itemY = catY + itemIdx * CELL_SIZE;
       const itemX = leftCatLabelWidth;
       const itemWidth = LABEL_SIZE - leftCatLabelWidth;
 
-      // White background
-      els.push(`<rect x="${itemX}" y="${itemY}" width="${itemWidth}" height="${CELL_SIZE}" fill="#ffffff"/>`);
-
-      // Right-aligned text
+      els.push(`<rect x="${itemX}" y="${itemY}" width="${itemWidth}" height="${CELL_SIZE}" fill="${cellColor}"/>`);
       els.push(`<text x="${itemX + itemWidth - 12}" y="${itemY + CELL_SIZE / 2}" text-anchor="end" dominant-baseline="central" fill="#475569" font-size="11" font-weight="bold">${escapeXml(item)}</text>`);
-
-      // Thin horizontal divider
-      els.push(`<line x1="${itemX}" y1="${itemY + CELL_SIZE}" x2="${itemX + itemWidth}" y2="${itemY + CELL_SIZE}" stroke="#e2e8f0" stroke-width="1"/>`);
+      els.push(`<line x1="${itemX}" y1="${itemY + CELL_SIZE}" x2="${itemX + itemWidth}" y2="${itemY + CELL_SIZE}" stroke="${cellBorderColor}" stroke-width="1"/>`);
     });
 
-    // Thick group border for item labels
-    els.push(`<rect x="${leftCatLabelWidth}" y="${catY}" width="${LABEL_SIZE - leftCatLabelWidth}" height="${GROUP_SIZE}" fill="none" stroke="#1e293b" stroke-width="2"/>`);
+    els.push(`<rect x="${leftCatLabelWidth}" y="${catY}" width="${LABEL_SIZE - leftCatLabelWidth}" height="${GROUP_SIZE}" fill="none" stroke="${borderColor}" stroke-width="${bt}"/>`);
   });
 
   // 7. Sub-grid blocks
@@ -221,19 +240,15 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
     const blockX = gridOffsetX + block.blockCol * GROUP_SIZE;
     const blockY = gridOffsetY + block.blockRow * GROUP_SIZE;
 
-    // White background
-    els.push(`<rect x="${blockX}" y="${blockY}" width="${GROUP_SIZE}" height="${GROUP_SIZE}" fill="#ffffff"/>`);
+    els.push(`<rect x="${blockX}" y="${blockY}" width="${GROUP_SIZE}" height="${GROUP_SIZE}" fill="${cellColor}"/>`);
 
-    // Cells
     for (let cr = 0; cr < ITEM_COUNT; cr++) {
       for (let cc = 0; cc < ITEM_COUNT; cc++) {
         const x = blockX + cc * CELL_SIZE;
         const y = blockY + cr * CELL_SIZE;
 
-        // Cell border
-        els.push(`<rect x="${x}" y="${y}" width="${CELL_SIZE}" height="${CELL_SIZE}" fill="none" stroke="#e2e8f0" stroke-width="1"/>`);
+        els.push(`<rect x="${x}" y="${y}" width="${CELL_SIZE}" height="${CELL_SIZE}" fill="none" stroke="${cellBorderColor}" stroke-width="1"/>`);
 
-        // Cell value
         const leftItem = block.leftCat.items[cr];
         const topItem = block.topCat.items[cc];
         const keys = [`${block.leftCat.name}:${leftItem}`, `${block.topCat.name}:${topItem}`].sort();
@@ -244,11 +259,9 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
         const cy = y + CELL_SIZE / 2;
 
         if (val === 'true') {
-          // Green circle (stroke) + green dot (fill)
           els.push(`<circle cx="${cx}" cy="${cy}" r="${CELL_SIZE * 0.25}" fill="none" stroke="#2bee9d" stroke-width="2.5"/>`);
           els.push(`<circle cx="${cx}" cy="${cy}" r="${CELL_SIZE * 0.12}" fill="#2bee9d"/>`);
         } else if (val === 'false') {
-          // Red X
           const size = CELL_SIZE * 0.2;
           els.push(`<line x1="${cx - size}" y1="${cy - size}" x2="${cx + size}" y2="${cy + size}" stroke="#ef4444" stroke-width="3"/>`);
           els.push(`<line x1="${cx + size}" y1="${cy - size}" x2="${cx - size}" y2="${cy + size}" stroke="#ef4444" stroke-width="3"/>`);
@@ -256,8 +269,7 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
       }
     }
 
-    // Thick block border
-    els.push(`<rect x="${blockX}" y="${blockY}" width="${GROUP_SIZE}" height="${GROUP_SIZE}" fill="none" stroke="#1e293b" stroke-width="2"/>`);
+    els.push(`<rect x="${blockX}" y="${blockY}" width="${GROUP_SIZE}" height="${GROUP_SIZE}" fill="none" stroke="${borderColor}" stroke-width="${bt}"/>`);
   }
 
   els.push('</svg>');
@@ -266,10 +278,10 @@ export function generateSVG(categories: Category[], gridState: GridState): strin
 
 // --- Export Entry Point ---
 
-export function exportPuzzle(puzzle: PuzzleData, gridState: GridState) {
+export function exportPuzzle(puzzle: PuzzleData, gridState: GridState, settings: ExportSettings = DEFAULT_EXPORT_SETTINGS) {
   const base = sanitizeFilename(puzzle.title);
 
-  const svg = generateSVG(puzzle.categories, gridState);
+  const svg = generateSVG(puzzle.categories, gridState, settings);
   downloadFile(svg, `${base}.svg`, 'image/svg+xml');
 
   const md = generateMarkdown(puzzle);

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import { generatePuzzle, getHint } from './services/geminiService';
-import { exportPuzzle } from './services/exportService';
+import { exportPuzzle, ExportSettings } from './services/exportService';
 import { PuzzleData, GameState, GridState, View, CellValue, Difficulty, GridSize, PuzzleType, GRID_PRESETS } from './types';
 import { LogicGrid } from './components/LogicGrid';
 import { Clues } from './components/Clues';
 import { TopicSelector } from './components/TopicSelector';
 import { Button } from './components/Button';
 import { ThinkingScreen } from './components/ThinkingScreen';
+import { ExportSettingsModal } from './components/ExportSettingsModal';
 
 // Initial State
 const initialState: GameState = {
@@ -116,6 +117,7 @@ export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const [view, setView] = useState<View>(View.LANDING);
   const [hintLoading, setHintLoading] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   useEffect(() => {
     let interval: number;
@@ -332,7 +334,7 @@ export default function App() {
             <Button variant="secondary" onClick={() => window.print()} title="Print">
                <span className="material-symbols-outlined">print</span>
             </Button>
-            <Button variant="secondary" onClick={() => state.puzzle && exportPuzzle(state.puzzle, state.grid)} title="Export SVG + Markdown">
+            <Button variant="secondary" onClick={() => setExportModalOpen(true)} title="Export SVG + Markdown">
                <span className="material-symbols-outlined">download</span>
             </Button>
             <Button variant="ghost" className="text-amber-600 hover:bg-amber-50" onClick={handleRevealSolution} title="Reveal Solution">
@@ -419,6 +421,18 @@ export default function App() {
             <span>Powered by Gemini</span>
         </div>
       </footer>
+
+      {/* Export Settings Modal */}
+      <ExportSettingsModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        onExport={(settings: ExportSettings) => {
+          if (state.puzzle) {
+            exportPuzzle(state.puzzle, state.grid, settings);
+          }
+          setExportModalOpen(false);
+        }}
+      />
 
       {/* Print Styles */}
       <style>{`
