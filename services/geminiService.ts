@@ -206,6 +206,16 @@ Example of correct output structure (for a 4-category, 4-item puzzle):
           data.goal = "Determine the correct assignments for each category.";
       }
 
+      // Shuffle item order within each category to break the diagonal
+      // pattern that Gemini tends to produce. The solution references
+      // items by name so reordering is safe.
+      for (const cat of data.categories) {
+          for (let i = cat.items.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [cat.items[i], cat.items[j]] = [cat.items[j], cat.items[i]];
+          }
+      }
+
       // Attach metadata
       data.puzzleType = puzzleType;
       data.gridSize = gridSize;
