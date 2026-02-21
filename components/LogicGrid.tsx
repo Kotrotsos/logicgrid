@@ -186,9 +186,6 @@ export const LogicGrid: React.FC<LogicGridProps> = ({ categories, gridState, gri
     } else {
       ctx.fillStyle = gs.backgroundColor;
       ctx.fillRect(0, 0, LABEL_SIZE, HEADER_HEIGHT);
-      ctx.strokeStyle = gs.borderColor;
-      ctx.lineWidth = gs.borderThickness;
-      ctx.strokeRect(0, 0, LABEL_SIZE, HEADER_HEIGHT);
     }
 
     // 3. Top category headers
