@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import { generatePuzzle, getHint } from './services/geminiService';
-import { exportPuzzle, ExportSettings } from './services/exportService';
-import { PuzzleData, GameState, GridState, View, CellValue, Difficulty, GridSize, PuzzleType, GRID_PRESETS } from './types';
+import { exportPuzzle } from './services/exportService';
+import { PuzzleData, GameState, GridState, GridSettings, DEFAULT_GRID_SETTINGS, View, CellValue, Difficulty, GridSize, PuzzleType, GRID_PRESETS } from './types';
 import { LogicGrid } from './components/LogicGrid';
 import { Clues } from './components/Clues';
 import { TopicSelector } from './components/TopicSelector';
 import { Button } from './components/Button';
 import { ThinkingScreen } from './components/ThinkingScreen';
-import { ExportSettingsModal } from './components/ExportSettingsModal';
+import { GridSettingsModal } from './components/ExportSettingsModal';
+import { ExportPreviewModal } from './components/ExportPreviewModal';
 
 // Initial State
 const initialState: GameState = {
@@ -117,6 +118,8 @@ export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const [view, setView] = useState<View>(View.LANDING);
   const [hintLoading, setHintLoading] = useState(false);
+  const [gridSettings, setGridSettings] = useState<GridSettings>({ ...DEFAULT_GRID_SETTINGS });
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
   useEffect(() => {
@@ -331,6 +334,9 @@ export default function App() {
                <span className="hidden md:inline">Clear</span>
                <span className="md:hidden material-symbols-outlined">restart_alt</span>
             </Button>
+            <Button variant="ghost" onClick={() => setSettingsModalOpen(true)} title="Grid Settings">
+               <span className="material-symbols-outlined">tune</span>
+            </Button>
             <Button variant="secondary" onClick={() => window.print()} title="Print">
                <span className="material-symbols-outlined">print</span>
             </Button>
@@ -370,6 +376,7 @@ export default function App() {
                     <LogicGrid
                         categories={state.puzzle.categories}
                         gridState={state.grid}
+                        gridSettings={gridSettings}
                         onCellClick={handleCellClick}
                     />
                 )}
@@ -422,17 +429,28 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Export Settings Modal */}
-      <ExportSettingsModal
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-        onExport={(settings: ExportSettings) => {
-          if (state.puzzle) {
-            exportPuzzle(state.puzzle, state.grid, settings);
-          }
-          setExportModalOpen(false);
-        }}
+      {/* Grid Settings Modal */}
+      <GridSettingsModal
+        open={settingsModalOpen}
+        settings={gridSettings}
+        onChange={setGridSettings}
+        onClose={() => setSettingsModalOpen(false)}
       />
+
+      {/* Export Preview Modal */}
+      {state.puzzle && (
+        <ExportPreviewModal
+          open={exportModalOpen}
+          categories={state.puzzle.categories}
+          gridState={state.grid}
+          gridSettings={gridSettings}
+          onExport={() => {
+            exportPuzzle(state.puzzle!, state.grid, gridSettings);
+            setExportModalOpen(false);
+          }}
+          onClose={() => setExportModalOpen(false)}
+        />
+      )}
 
       {/* Print Styles */}
       <style>{`

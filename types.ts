@@ -58,3 +58,23 @@ export enum View {
   PUZZLE = 'PUZZLE',
   PRINT = 'PRINT'
 }
+
+export interface GridSettings {
+  borderThickness: number;
+  showLogo: boolean;
+  backgroundColor: string;
+  cellColor: string;
+  headerColor: string;
+  borderColor: string;
+  cellBorderColor: string;
+}
+
+export const DEFAULT_GRID_SETTINGS: GridSettings = {
+  borderThickness: 2,
+  showLogo: true,
+  backgroundColor: '#f1f5f9',
+  cellColor: '#ffffff',
+  headerColor: '#f1f5f9',
+  borderColor: '#1e293b',
+  cellBorderColor: '#e2e8f0',
+};

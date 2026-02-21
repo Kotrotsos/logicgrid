@@ -1,26 +1,4 @@
-import { PuzzleData, Category, GridState } from '../types';
-
-// --- Export Settings ---
-
-export interface ExportSettings {
-  borderThickness: number;
-  showLogo: boolean;
-  backgroundColor: string;
-  cellColor: string;
-  headerColor: string;
-  borderColor: string;
-  cellBorderColor: string;
-}
-
-export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
-  borderThickness: 2,
-  showLogo: true,
-  backgroundColor: '#f1f5f9',
-  cellColor: '#ffffff',
-  headerColor: '#f1f5f9',
-  borderColor: '#1e293b',
-  cellBorderColor: '#e2e8f0',
-};
+import { PuzzleData, Category, GridState, GridSettings, DEFAULT_GRID_SETTINGS } from '../types';
 
 // --- Download Helper ---
 
@@ -130,7 +108,7 @@ function escapeXml(s: string): string {
 export function generateSVG(
   categories: Category[],
   gridState: GridState,
-  settings: ExportSettings = DEFAULT_EXPORT_SETTINGS,
+  settings: GridSettings = DEFAULT_GRID_SETTINGS,
 ): string {
   const { borderThickness, showLogo, backgroundColor, cellColor, headerColor, borderColor, cellBorderColor } = settings;
 
@@ -159,11 +137,10 @@ export function generateSVG(
   const gridOffsetX = LABEL_SIZE;
   const gridOffsetY = HEADER_HEIGHT + TOP_LABEL_HEIGHT;
 
-  const bt = borderThickness; // shorthand
+  const bt = borderThickness;
 
   const els: string[] = [];
 
-  // SVG header
   els.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CONTENT_WIDTH} ${CONTENT_HEIGHT}" width="${CONTENT_WIDTH}" height="${CONTENT_HEIGHT}" font-family="Inter, sans-serif">`);
 
   // 1. Background
@@ -278,7 +255,7 @@ export function generateSVG(
 
 // --- Export Entry Point ---
 
-export function exportPuzzle(puzzle: PuzzleData, gridState: GridState, settings: ExportSettings = DEFAULT_EXPORT_SETTINGS) {
+export function exportPuzzle(puzzle: PuzzleData, gridState: GridState, settings: GridSettings = DEFAULT_GRID_SETTINGS) {
   const base = sanitizeFilename(puzzle.title);
 
   const svg = generateSVG(puzzle.categories, gridState, settings);

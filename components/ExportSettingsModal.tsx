@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { ExportSettings, DEFAULT_EXPORT_SETTINGS } from '../services/exportService';
+import React from 'react';
+import { GridSettings, DEFAULT_GRID_SETTINGS } from '../types';
 
-interface ExportSettingsModalProps {
+interface GridSettingsModalProps {
   open: boolean;
+  settings: GridSettings;
+  onChange: (settings: GridSettings) => void;
   onClose: () => void;
-  onExport: (settings: ExportSettings) => void;
 }
 
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
@@ -29,37 +30,26 @@ function ColorInput({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-export const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({ open, onClose, onExport }) => {
-  const [settings, setSettings] = useState<ExportSettings>({ ...DEFAULT_EXPORT_SETTINGS });
-
+export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({ open, settings, onChange, onClose }) => {
   if (!open) return null;
 
-  const update = <K extends keyof ExportSettings>(key: K, value: ExportSettings[K]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleReset = () => {
-    setSettings({ ...DEFAULT_EXPORT_SETTINGS });
+  const update = <K extends keyof GridSettings>(key: K, value: GridSettings[K]) => {
+    onChange({ ...settings, [key]: value });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-slate-900">Export Settings</h3>
+          <h3 className="text-lg font-bold text-slate-900">Grid Settings</h3>
           <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-5 space-y-6 overflow-y-auto">
-
           {/* Border thickness */}
           <div>
             <label className="flex items-center justify-between gap-3">
@@ -108,28 +98,19 @@ export const ExportSettingsModal: React.FC<ExportSettingsModalProps> = ({ open, 
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
           <button
-            onClick={handleReset}
+            onClick={() => onChange({ ...DEFAULT_GRID_SETTINGS })}
             className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
           >
             Reset defaults
           </button>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => onExport(settings)}
-              className="px-5 py-2 text-sm font-bold bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
-            >
-              Export
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 text-sm font-bold bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            Done
+          </button>
         </div>
       </div>
     </div>
