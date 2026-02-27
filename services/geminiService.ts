@@ -110,25 +110,38 @@ CRITICAL requirements for the solution output:
 
 The "goal" field must start with "Determine" and describe what the solver needs to figure out.
 
-Example of correct output structure (for a 4-category, 4-item puzzle):
+FULL QUALITY EXAMPLE (4 categories, 4 items, 11 clues, unique solution, all clues necessary):
 {
-  "title": "Mystery at the Park",
-  "story": "Four friends visited different parks...",
-  "goal": "Determine which friend visited which park, did which activity, and in which month.",
+  "title": "Aegis Station Assignments",
+  "story": "Four crew members have just arrived aboard the Aegis space station. Each is assigned to a different module, holds a unique role, and will serve a different mission duration. Station command needs every assignment locked in before the next supply run.",
+  "goal": "Determine each crew member's module, role, and mission duration.",
   "categories": [
-    {"name": "Person", "items": ["Alice", "Bob", "Carol", "Dave"]},
-    {"name": "Park", "items": ["Central", "Hyde", "Golden Gate", "Yosemite"]},
-    {"name": "Activity", "items": ["Hiking", "Swimming", "Reading", "Cycling"]},
-    {"name": "Month", "items": ["January", "March", "June", "October"]}
+    {"name": "Crew", "items": ["Noah", "Maya", "Chloe", "Leo"]},
+    {"name": "Module", "items": ["Farm", "Lab", "Medbay", "Control"]},
+    {"name": "Role", "items": ["Scientist", "Medic", "Pilot", "Engineer"]},
+    {"name": "Duration", "items": ["120 days", "90 days", "60 days", "30 days"]}
   ],
-  "clues": ["Alice did not visit in January.", "The person who went hiking visited Central Park."],
+  "clues": [
+    "The Scientist works in the Lab module.",
+    "The Pilot is stationed in Control.",
+    "Maya's mission is the longest of all four crew members.",
+    "The crew member assigned to Medbay serves for exactly 60 days.",
+    "Leo is not assigned to the Farm or the Lab.",
+    "Chloe's mission is shorter than Noah's.",
+    "The Engineer's mission lasts longer than the Medic's.",
+    "Noah does not work in the Control module.",
+    "Leo is not the Engineer.",
+    "Leo is not the Pilot.",
+    "Chloe is not the Pilot."
+  ],
   "solution": [
-    ["Alice", "Hyde", "Swimming", "March"],
-    ["Bob", "Central", "Hiking", "January"],
-    ["Carol", "Golden Gate", "Reading", "October"],
-    ["Dave", "Yosemite", "Cycling", "June"]
+    ["Noah", "Farm", "Engineer", "90 days"],
+    ["Maya", "Control", "Pilot", "120 days"],
+    ["Chloe", "Lab", "Scientist", "30 days"],
+    ["Leo", "Medbay", "Medic", "60 days"]
   ]
-}`;
+}
+Note the clue mix: 2 cross-category links (clues 1, 2), 1 superlative (3), 1 absolute assignment (4), 2 comparisons (6, 7), and 5 exclusions (5, 8, 9, 10, 11). Every clue is necessary: removing any single one yields multiple solutions.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
