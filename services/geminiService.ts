@@ -75,13 +75,34 @@ Difficulty rules:
 - Medium: Mix of direct and inferential clues, requires chain reasoning.
 - Hard: Mostly indirect clues requiring multi-step deduction.
 
-Rules:
-1. Every item belongs to exactly one group, no item appears in more than one combination.
-2. The puzzle must have exactly ONE unique solution.
-3. All clues must be necessary, removing any single clue should make the puzzle unsolvable.
-4. No clue should be redundant, every clue must contribute at least one new deduction.
+PUZZLE STRUCTURE RULES:
+1. Use ${itemCount} items per category and ensure a strict 1-to-1 mapping across all categories. No repeats, no overlaps.
+2. State the goal clearly: "Determine X, Y, Z for each [entity]."
+3. Every item belongs to exactly one group, no item appears in more than one combination.
+4. The puzzle must have exactly ONE unique solution.
 
-CRITICAL requirements for the solution:
+CLUE QUALITY RULES:
+1. Every clue must be logically precise. Avoid vague words like "around," "near," or "between" unless clearly defined.
+2. If using positional language, be explicit:
+   - Adjacent: "directly left/right of"
+   - Non-adjacent: "somewhere left/right of"
+   - Between: "A is somewhere between B and C (not necessarily adjacent)"
+3. Write each clue as a single statement. Avoid compound clues unless both facts joined by AND are necessary.
+4. No clue should be redundant: every clue must contribute at least one new deduction.
+5. All clues must be necessary: removing any single clue should make the puzzle unsolvable or yield multiple solutions.
+
+DIFFICULTY BALANCE:
+1. Avoid stacking too many "direct placement" clues (e.g., "X is position 1" + "Y is at an end").
+2. Use a mix: exclusions ("not"), relative ordering ("left of"), and at most one or two absolute anchors.
+3. Each category should be constrained by multiple clues. Don't pile all constraints on one person/category.
+
+VERIFICATION (do this in your thinking before producing output):
+1. Build the complete solution grid first, then write clues that lead to it.
+2. Verify the clues are not underdetermined (multiple solutions) and not overconstrained (no solution).
+3. Test by removing one clue at a time: uniqueness should break (confirms no padding).
+4. Confirm every item from every category appears in exactly one solution row.
+
+CRITICAL requirements for the solution output:
 - The solution is an array of exactly ${itemCount} rows.
 - Each row is an array of exactly ${categoryCount} strings, one item per category, in the SAME ORDER as the categories array.
 - The first string in each row corresponds to the first category, the second to the second category, etc.
@@ -113,6 +134,7 @@ Example of correct output structure (for a 4-category, 4-item puzzle):
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
+        thinkingConfig: { thinkingBudget: 8192 },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
