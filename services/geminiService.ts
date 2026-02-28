@@ -68,6 +68,8 @@ EINSTEIN PUZZLE MODE:
       .replace(/\{\{difficulty\}\}/g, difficulty)
       .replace(/\{\{categoryCount\}\}/g, String(categoryCount))
       .replace(/\{\{itemCount\}\}/g, String(itemCount))
+      .replace(/\{\{clueMin\}\}/g, String(clueRange.min))
+      .replace(/\{\{clueMax\}\}/g, String(clueRange.max))
       .replace(/\{\{einsteinInstructions\}\}/g, einsteinInstructions);
 
     const response = await ai.models.generateContent({
