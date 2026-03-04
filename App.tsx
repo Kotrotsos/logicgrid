@@ -9,6 +9,7 @@ import { Button } from './components/Button';
 import { ThinkingScreen } from './components/ThinkingScreen';
 import { GridSettingsModal } from './components/ExportSettingsModal';
 import { ExportPreviewModal } from './components/ExportPreviewModal';
+import { ResultsModal } from './components/ResultsModal';
 
 // Initial State
 const initialState: GameState = {
@@ -121,6 +122,8 @@ export default function App() {
   const [gridSettings, setGridSettings] = useState<GridSettings>({ ...DEFAULT_GRID_SETTINGS });
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [wasRevealed, setWasRevealed] = useState(false);
 
   useEffect(() => {
     let interval: number;
@@ -226,10 +229,40 @@ export default function App() {
     }
 
     if (errors === 0) {
-        alert("So far so good! No errors found.");
+        // Check if every correct pair has a 'true' mark (puzzle fully solved)
+        const categories = state.puzzle.categories;
+        let allCorrectMarked = true;
+        for (let i = 0; i < categories.length && allCorrectMarked; i++) {
+          for (let j = i + 1; j < categories.length && allCorrectMarked; j++) {
+            for (const row of state.puzzle.solution) {
+              const val1 = findSolutionValue(row, categories[i].name);
+              const val2 = findSolutionValue(row, categories[j].name);
+              if (val1 && val2) {
+                const key = [`${categories[i].name}:${val1}`, `${categories[j].name}:${val2}`].sort().join('|');
+                if (state.grid[key] !== 'true') {
+                  allCorrectMarked = false;
+                }
+              }
+            }
+          }
+        }
+
+        if (allCorrectMarked) {
+          dispatch({ type: 'SOLVE', payload: state.grid });
+          setWasRevealed(false);
+          setResultsModalOpen(true);
+        } else {
+          alert("So far so good! No errors found.");
+        }
     } else {
         alert(`Found ${errors} error${errors === 1 ? '' : 's'} in your markings.`);
     }
+  };
+
+  const findSolutionValue = (row: Record<string, string>, catName: string): string | undefined => {
+    if (catName in row) return row[catName];
+    const k = Object.keys(row).find(k => norm(k) === norm(catName));
+    return k ? row[k] : undefined;
   };
 
   const handleRevealSolution = () => {
@@ -268,6 +301,8 @@ export default function App() {
           console.log(`[LogicGrid] Reveal result: ${trueCount} true, ${Object.keys(newGrid).length - trueCount} false`);
 
           dispatch({ type: 'SOLVE', payload: newGrid });
+          setWasRevealed(true);
+          setResultsModalOpen(true);
       } catch (e) {
           console.error("Reveal failed", e);
           alert("Could not reveal solution due to a data format issue.");
@@ -343,13 +378,22 @@ export default function App() {
             <Button variant="secondary" onClick={() => setExportModalOpen(true)} title="Export SVG + Markdown">
                <span className="material-symbols-outlined">download</span>
             </Button>
-            <Button variant="ghost" className="text-amber-600 hover:bg-amber-50" onClick={handleRevealSolution} title="Reveal Solution">
-               <span className="material-symbols-outlined">lightbulb_circle</span>
-            </Button>
-            <Button onClick={handleCheckSolution}>
-              <span className="hidden md:inline">Check Solution</span>
-              <span className="md:hidden material-symbols-outlined">verified</span>
-            </Button>
+            {state.isSolved ? (
+              <Button variant="secondary" onClick={() => setResultsModalOpen(true)} title="Show Results">
+                <span className="material-symbols-outlined">leaderboard</span>
+                <span className="hidden md:inline">Results</span>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" className="text-amber-600 hover:bg-amber-50" onClick={handleRevealSolution} title="Reveal Solution">
+                   <span className="material-symbols-outlined">lightbulb_circle</span>
+                </Button>
+                <Button onClick={handleCheckSolution}>
+                  <span className="hidden md:inline">Check Solution</span>
+                  <span className="md:hidden material-symbols-outlined">verified</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -449,6 +493,20 @@ export default function App() {
             setExportModalOpen(false);
           }}
           onClose={() => setExportModalOpen(false)}
+        />
+      )}
+
+      {/* Results Modal */}
+      {state.puzzle && (
+        <ResultsModal
+          open={resultsModalOpen}
+          title={state.puzzle.title}
+          categories={state.puzzle.categories}
+          solution={state.puzzle.solution}
+          grid={state.grid}
+          timer={state.timer}
+          wasRevealed={wasRevealed}
+          onClose={() => setResultsModalOpen(false)}
         />
       )}
 
