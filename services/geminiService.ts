@@ -73,7 +73,7 @@ EINSTEIN PUZZLE MODE:
       .replace(/\{\{einsteinInstructions\}\}/g, einsteinInstructions);
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.1-pro-preview",
       contents: prompt,
       config: {
         thinkingConfig: { thinkingBudget: 8192 },
@@ -207,7 +207,7 @@ export const getHint = async (puzzle: PuzzleData, currentGridState: any): Promis
         `;
 
          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.1-pro-preview",
             contents: prompt,
          });
 
