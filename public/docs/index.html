@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LogicGrid AI - Generate and Solve Logic Puzzles with AI</title>
+  <meta name="description" content="Generate unique logic grid puzzles on any topic using Gemini AI. Solve interactively in your browser with hints, undo/redo, export, and more." />
+  <meta name="theme-color" content="#2bee9d" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #2bee9d;
+      --primary-dark: #22c97f;
+      --bg: #f6f8f7;
+      --bg-card: #ffffff;
+      --bg-code: #f1f5f9;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+      --radius: 12px;
+    }
+
+    .dark {
+      --bg: #0f1a14;
+      --bg-card: #162119;
+      --bg-code: #1a2b21;
+      --text: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #2d3d33;
+      --border-strong: #3d5244;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--primary-dark); text-decoration: none; }
+    .dark a { color: var(--primary); }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    .wide-container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg-card) 85%, transparent);
+    }
+    nav .inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    nav .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 16px; color: var(--text);
+      text-decoration: none;
+    }
+    nav .logo:hover { text-decoration: none; }
+    nav .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--primary); color: #10221a;
+      display: flex; align-items: center; justify-content: center;
+    }
+    nav .links { display: flex; align-items: center; gap: 24px; font-size: 14px; font-weight: 500; }
+    nav .links a { color: var(--text-secondary); }
+    nav .links a:hover { color: var(--text); text-decoration: none; }
+    .theme-toggle {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      width: 36px; height: 36px; cursor: pointer; color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .theme-toggle:hover { background: var(--bg-code); }
+    .theme-toggle .material-symbols-outlined { font-size: 20px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 64px; text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
+      color: var(--primary-dark);
+      margin-bottom: 20px;
+    }
+    .dark .hero-badge { color: var(--primary); }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 56px); font-weight: 900;
+      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 16px;
+    }
+    .hero h1 .accent { color: var(--primary-dark); }
+    .dark .hero h1 .accent { color: var(--primary); }
+    .hero p {
+      font-size: 18px; color: var(--text-secondary);
+      max-width: 560px; margin: 0 auto 32px;
+    }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 700;
+      border: none; cursor: pointer; transition: all 0.15s; text-decoration: none;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary {
+      background: var(--primary); color: #10221a;
+    }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+    .btn-secondary {
+      background: var(--bg-card); color: var(--text); border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--border-strong); background: var(--bg-code); }
+    .btn .material-symbols-outlined { font-size: 18px; }
+
+    /* Features */
+    .features { padding: 64px 0; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
+    }
+    .feature-card .icon-wrap {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .feature-card .icon-wrap .material-symbols-outlined {
+      font-size: 22px; color: var(--primary-dark);
+    }
+    .dark .feature-card .icon-wrap .material-symbols-outlined { color: var(--primary); }
+    .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Section headers */
+    .section-header { text-align: center; margin-bottom: 40px; }
+    .section-header h2 {
+      font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    .section-header p { font-size: 15px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; }
+
+    /* Docs */
+    .docs { padding: 64px 0 80px; }
+    .docs-nav {
+      position: sticky; top: 72px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow);
+    }
+    .docs-nav h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 10px; }
+    .docs-nav a {
+      display: block; padding: 5px 0; font-size: 14px; color: var(--text-secondary); font-weight: 500;
+    }
+    .docs-nav a:hover { color: var(--text); text-decoration: none; }
+    .docs-layout {
+      display: grid; grid-template-columns: 200px 1fr; gap: 40px; align-items: start;
+    }
+    @media (max-width: 768px) {
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-nav { position: static; }
+    }
+
+    .doc-section { margin-bottom: 48px; }
+    .doc-section h2 {
+      font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+      padding-bottom: 10px; border-bottom: 2px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .doc-section h3 {
+      font-size: 16px; font-weight: 700; margin-top: 24px; margin-bottom: 8px;
+    }
+    .doc-section p, .doc-section li {
+      font-size: 15px; color: var(--text-secondary); line-height: 1.65;
+    }
+    .doc-section ul, .doc-section ol { padding-left: 20px; margin: 8px 0; }
+    .doc-section li { margin-bottom: 4px; }
+    .doc-section code {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px;
+      background: var(--bg-code); padding: 2px 6px; border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .doc-section pre {
+      background: var(--bg-code); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px; overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px;
+      line-height: 1.5; margin: 12px 0;
+    }
+    .doc-section pre code { background: none; border: none; padding: 0; }
+
+    .doc-table {
+      width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0;
+    }
+    .doc-table th {
+      text-align: left; padding: 8px 12px; font-weight: 600; font-size: 12px;
+      text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);
+      border-bottom: 2px solid var(--border);
+    }
+    .doc-table td {
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .callout {
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+      border-left: 3px solid var(--primary);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px; margin: 12px 0; font-size: 14px;
+    }
+
+    .kbd {
+      display: inline-block; padding: 2px 7px; font-size: 12px; font-weight: 600;
+      background: var(--bg-code); border: 1px solid var(--border-strong);
+      border-radius: 4px; font-family: 'SF Mono', monospace;
+      box-shadow: 0 1px 0 var(--border-strong);
+    }
+
+    /* Footer */
+    footer {
+      padding: 32px 0; border-top: 1px solid var(--border);
+      text-align: center; font-size: 13px; color: var(--text-muted);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div class="wide-container inner">
+      <a href="#" class="logo">
+        <div class="logo-icon">
+          <span class="material-symbols-outlined" style="font-size:20px;font-weight:700">extension</span>
+        </div>
+        LogicGrid AI
+      </a>
+      <div class="links">
+        <a href="#features">Features</a>
+        <a href="#docs">Docs</a>
+        <a href="https://github.com/kotrotsos/logicgrid-ai" target="_blank">GitHub</a>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="material-symbols-outlined" style="font-size:16px">auto_awesome</span>
+        Powered by Gemini AI
+      </div>
+      <h1>Logic puzzles on<br/><span class="accent">any topic, instantly</span></h1>
+      <p>Generate unique logic grid puzzles from any theme you can imagine. Solve interactively in your browser with a full-featured canvas grid, AI hints, and more.</p>
+      <div class="hero-actions">
+        <a href="/" class="btn btn-primary">
+          <span class="material-symbols-outlined">play_arrow</span>
+          Launch App
+        </a>
+        <a href="#docs" class="btn btn-secondary">
+          <span class="material-symbols-outlined">description</span>
+          Read Docs
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="wide-container">
+      <div class="section-header">
+        <h2>Features</h2>
+        <p>Everything you need to generate, solve, and share logic grid puzzles.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">auto_awesome</span></div>
+          <h3>AI Puzzle Generation</h3>
+          <p>Enter any topic and Gemini generates a complete puzzle with story, categories, clues, and a verified solution. Supports 3x3 to 6x6 grids.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">grid_on</span></div>
+          <h3>Interactive Canvas Grid</h3>
+          <p>Pan, zoom, and click to mark cells. Left-click for true (green circle), right-click for false (red X). Hover highlights cross-reference headers.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">psychology</span></div>
+          <h3>Einstein Mode</h3>
+          <p>A special puzzle type that adds a positional "Position" category with spatial reasoning clues like "left of" and "next to".</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">lightbulb</span></div>
+          <h3>AI Hints</h3>
+          <p>Stuck? Ask Gemini for a single logical deduction hint based on your current grid state and the puzzle clues.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">undo</span></div>
+          <h3>Full Undo/Redo</h3>
+          <p>Every cell change is tracked in a history stack. Undo and redo freely, or clear the entire grid to start over.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">download</span></div>
+          <h3>Export &amp; Print</h3>
+          <p>Export your puzzle as SVG + Markdown for sharing or archiving. Print directly from the browser with a clean layout.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">leaderboard</span></div>
+          <h3>Results Roster</h3>
+          <p>After solving or revealing, see a summary modal with the full solution table, your time, and per-row match indicators.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">tune</span></div>
+          <h3>Grid Customization</h3>
+          <p>Adjust border thickness, toggle the logo, and customize all grid colors (background, cells, headers, borders) before exporting.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon-wrap"><span class="material-symbols-outlined">speed</span></div>
+          <h3>Three Difficulty Levels</h3>
+          <p>Easy uses direct clues, Medium adds multi-step inference, and Hard relies on indirect reasoning with few anchors.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Documentation -->
+  <section class="docs" id="docs">
+    <div class="wide-container">
+      <div class="section-header">
+        <h2>Documentation</h2>
+        <p>Complete reference for developers and users.</p>
+      </div>
+
+      <div class="docs-layout">
+        <!-- Sidebar -->
+        <aside>
+          <div class="docs-nav">
+            <h4>Contents</h4>
+            <a href="#doc-quickstart">Quick Start</a>
+            <a href="#doc-usage">How to Play</a>
+            <a href="#doc-puzzletypes">Puzzle Types</a>
+            <a href="#doc-architecture">Architecture</a>
+            <a href="#doc-components">Components</a>
+            <a href="#doc-services">Services</a>
+            <a href="#doc-datamodel">Data Model</a>
+            <a href="#doc-state">State Management</a>
+            <a href="#doc-promptengine">Prompt Engine</a>
+            <a href="#doc-config">Configuration</a>
+            <a href="#doc-env">Environment</a>
+          </div>
+        </aside>
+
+        <!-- Content -->
+        <div>
+
+          <!-- Quick Start -->
+          <div class="doc-section" id="doc-quickstart">
+            <h2>Quick Start</h2>
+            <p>Clone the repository and install dependencies:</p>
+<pre><code>git clone https://github.com/kotrotsos/logicgrid-ai.git
+cd logicgrid-ai
+npm install</code></pre>
+            <p>Create a <code>.env.local</code> file with your Gemini API key:</p>
+<pre><code>VITE_GEMINI_API_KEY=your_gemini_api_key_here</code></pre>
+            <p>Start the dev server:</p>
+<pre><code>npm run dev</code></pre>
+            <p>Open <code>http://localhost:3000</code> in your browser.</p>
+
+            <h3>Build for Production</h3>
+<pre><code>npm run build     # outputs to dist/
+npm run preview   # preview the production build</code></pre>
+          </div>
+
+          <!-- How to Play -->
+          <div class="doc-section" id="doc-usage">
+            <h2>How to Play</h2>
+            <ol>
+              <li><strong>Choose a topic</strong> , type anything ("Murder Mystery at a Mansion", "Space Station Crew") or pick a suggestion.</li>
+              <li><strong>Configure</strong> , select puzzle type (Logic Grid or Einstein), grid size (3x3 to 6x6), and difficulty.</li>
+              <li><strong>Generate</strong> , click the arrow button. Gemini creates the puzzle in a few seconds.</li>
+              <li><strong>Read the clues</strong> in the left sidebar. Check them off as you use them.</li>
+              <li><strong>Fill the grid</strong>:
+                <ul>
+                  <li><span class="kbd">Left click</span> to mark a cell as <strong>true</strong> (green circle = these items match)</li>
+                  <li><span class="kbd">Right click</span> to mark as <strong>false</strong> (red X = these items don't match)</li>
+                  <li>Click again to clear</li>
+                </ul>
+              </li>
+              <li><strong>Navigate</strong>: drag to pan, scroll to zoom, or use the reset view button.</li>
+              <li><strong>Check</strong> your work at any time. If the grid is fully and correctly filled, you win.</li>
+              <li><strong>Reveal</strong> the solution if you get stuck (this ends the game).</li>
+            </ol>
+
+            <h3>Toolbar Actions</h3>
+            <table class="doc-table">
+              <thead><tr><th>Button</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Clear</td><td>Empty the entire grid (undoable)</td></tr>
+                <tr><td>Settings (tune)</td><td>Open grid appearance settings</td></tr>
+                <tr><td>Print</td><td>Print the puzzle (hides UI chrome)</td></tr>
+                <tr><td>Export (download)</td><td>Preview and download as SVG + Markdown</td></tr>
+                <tr><td>Reveal (lightbulb)</td><td>Show the full solution and end the game</td></tr>
+                <tr><td>Check Solution</td><td>Validate your current marks for errors</td></tr>
+                <tr><td>Results (post-solve)</td><td>Reopen the results roster modal</td></tr>
+                <tr><td>Undo / Redo</td><td>Step through your move history</td></tr>
+                <tr><td>Get Hint</td><td>Ask Gemini for a single deduction hint</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Puzzle Types -->
+          <div class="doc-section" id="doc-puzzletypes">
+            <h2>Puzzle Types</h2>
+
+            <h3>Standard Logic Grid</h3>
+            <p>The classic format. You're given N categories each with N items. Using only the clues, determine which item from each category belongs together. Every combination of two categories forms a sub-grid in the L-shaped layout.</p>
+
+            <h3>Einstein Puzzle</h3>
+            <p>Adds a mandatory "Position" category (numbered 1 through N). Clues use spatial language: "directly left of", "next to", "between". Available in 4x4 and 5x5 sizes only.</p>
+
+            <h3>Difficulty Levels</h3>
+            <table class="doc-table">
+              <thead><tr><th>Level</th><th>Clue Style</th></tr></thead>
+              <tbody>
+                <tr><td>Easy</td><td>Mostly direct clues, at most 1-2 inference steps</td></tr>
+                <tr><td>Medium</td><td>Mix of direct and inferential, 2-4 multi-step deductions</td></tr>
+                <tr><td>Hard</td><td>Mostly indirect, few absolute anchors, multi-step cross-category reasoning</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Grid Sizes</h3>
+            <table class="doc-table">
+              <thead><tr><th>Preset</th><th>Categories</th><th>Items per Category</th></tr></thead>
+              <tbody>
+                <tr><td>3x3 Quick</td><td>3</td><td>3</td></tr>
+                <tr><td>4x4 Classic</td><td>4</td><td>4</td></tr>
+                <tr><td>5x5 Challenge</td><td>5</td><td>5</td></tr>
+                <tr><td>6x6 Expert</td><td>6</td><td>6</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Architecture -->
+          <div class="doc-section" id="doc-architecture">
+            <h2>Architecture</h2>
+<pre><code>logicgrid-ai/
+  index.html            # App shell, Tailwind CDN, import maps
+  index.tsx             # React root mount
+  App.tsx               # Root component, game state, reducer
+  types.ts              # All TypeScript types and constants
+  vite.config.ts        # Build config with env injection
+  components/
+    Button.tsx          # Reusable button (4 variants)
+    Clues.tsx           # Sidebar: story, goal, clue checklist, hints
+    LogicGrid.tsx       # Canvas-rendered interactive grid
+    ResultsModal.tsx    # Post-solve results roster
+    ExportSettingsModal.tsx  # Grid appearance settings
+    ExportPreviewModal.tsx   # SVG export preview
+    ThinkingScreen.tsx  # Animated loading during generation
+    TopicSelector.tsx   # Landing page form
+  services/
+    geminiService.ts    # Gemini API: puzzle generation + hints
+    exportService.ts    # SVG + Markdown generation and download
+    prompt.md           # Gemini prompt template (loaded as raw string)</code></pre>
+
+            <h3>Tech Stack</h3>
+            <table class="doc-table">
+              <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+              <tbody>
+                <tr><td>Framework</td><td>React 19</td></tr>
+                <tr><td>Language</td><td>TypeScript 5.8</td></tr>
+                <tr><td>Build</td><td>Vite 6</td></tr>
+                <tr><td>Styling</td><td>Tailwind CSS v3 (CDN)</td></tr>
+                <tr><td>Icons</td><td>Material Symbols Outlined</td></tr>
+                <tr><td>Font</td><td>Inter</td></tr>
+                <tr><td>AI</td><td>Gemini 3.1 Pro via @google/genai</td></tr>
+                <tr><td>Grid rendering</td><td>HTML5 Canvas 2D</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Components -->
+          <div class="doc-section" id="doc-components">
+            <h2>Components</h2>
+
+            <h3>TopicSelector</h3>
+            <p>Landing page form. Local state for topic, difficulty, puzzle type, and grid size. Includes five suggestion chips for quick starts. Einstein mode auto-restricts grid size to 4x4 or 5x5.</p>
+
+            <h3>LogicGrid</h3>
+            <p>The core puzzle interface, entirely rendered on an HTML5 Canvas with device-pixel-ratio support. Computes the classic L-shaped layout from N categories using <code>computeLShapeLayout()</code>, producing C(N,2) sub-grid blocks in a staircase arrangement.</p>
+            <p>Supports pan (drag), zoom (scroll wheel, 0.2x to 4.0x), left-click for true, right-click for false, and hover cross-highlighting of headers.</p>
+
+            <h3>Clues</h3>
+            <p>Left sidebar showing the story, goal, and a numbered clue checklist. Each clue is clickable to mark as used (strikethrough). Includes a "Get Hint" button that calls Gemini.</p>
+
+            <h3>ResultsModal</h3>
+            <p>Shown after solving or revealing. Displays the full solution as a roster table with one row per entity. Shows elapsed time, whether self-solved or revealed, and per-row match indicators (green check or red X) when self-solved.</p>
+
+            <h3>ExportSettingsModal</h3>
+            <p>Controls grid visual settings: border thickness (0.5-5px), logo toggle, and five color pickers (background, cell, header, thick borders, cell borders). Includes a reset-to-defaults button.</p>
+
+            <h3>ExportPreviewModal</h3>
+            <p>Shows a live SVG preview of the grid as it will appear when exported. Uses DOMParser for safe SVG injection. Export triggers simultaneous SVG and Markdown file downloads.</p>
+
+            <h3>ThinkingScreen</h3>
+            <p>Full-screen loading animation shown during puzzle generation. Displays an animated 2x2 grid of colored squares with rotating status messages.</p>
+
+            <h3>Button</h3>
+            <p>Reusable button component with four variants: <code>primary</code> (green), <code>secondary</code> (white with border), <code>ghost</code> (no background), and <code>danger</code> (red hover). Supports icon and loading spinner props.</p>
+          </div>
+
+          <!-- Services -->
+          <div class="doc-section" id="doc-services">
+            <h2>Services</h2>
+
+            <h3>geminiService.ts</h3>
+            <p><strong><code>generatePuzzle(topic, difficulty, gridSize, puzzleType)</code></strong></p>
+            <ol>
+              <li>Loads the prompt template from <code>prompt.md</code> and fills in template variables (topic, difficulty, category count, item count, clue range, Einstein instructions).</li>
+              <li>Calls Gemini 3.1 Pro with <code>thinkingBudget: 8192</code> and structured JSON output using a response schema.</li>
+              <li>Validates the response (category count, item count per category).</li>
+              <li>Converts the solution from array-of-arrays to array-of-objects keyed by category name.</li>
+              <li>Shuffles item order within each category using Fisher-Yates to prevent diagonal solutions.</li>
+            </ol>
+
+            <p><strong><code>getHint(puzzle, gridState)</code></strong></p>
+            <p>Sends the full puzzle and current grid state to Gemini and asks for a single logical deduction hint. Returns plain text. Falls back to a generic message on error.</p>
+
+            <h3>exportService.ts</h3>
+            <p><strong><code>generateSVG(categories, gridState, settings)</code></strong> , builds a complete SVG string mirroring the canvas layout with all grid settings applied.</p>
+            <p><strong><code>generateMarkdown(puzzle)</code></strong> , produces a Markdown document with the title, story, goal, clues, and category table.</p>
+            <p><strong><code>exportPuzzle(puzzle, gridState, settings)</code></strong> , triggers simultaneous downloads of both files.</p>
+          </div>
+
+          <!-- Data Model -->
+          <div class="doc-section" id="doc-datamodel">
+            <h2>Data Model</h2>
+            <p>All types are defined in <code>types.ts</code>.</p>
+
+            <h3>PuzzleData</h3>
+<pre><code>{
+  title: string;
+  story: string;           // 2-4 sentence narrative
+  goal: string;            // Starts with "Determine..."
+  categories: Category[];  // { name: string, items: string[] }
+  clues: string[];
+  solution: Record&lt;string, string&gt;[];
+  puzzleType: 'standard' | 'einstein';
+  gridSize: { categoryCount: number, itemCount: number, label: string };
+}</code></pre>
+
+            <h3>GridState</h3>
+            <p>A flat <code>Record&lt;string, CellValue&gt;</code> where keys are canonical pair identifiers:</p>
+<pre><code>// Key format: two "Category:Item" pairs, sorted and joined with "|"
+"Dogs:Max|Owners:Anita" -> "true"
+"Colors:Blue|Dogs:Max"  -> "false"</code></pre>
+            <p><code>CellValue</code> is one of <code>"empty"</code>, <code>"true"</code>, or <code>"false"</code>.</p>
+
+            <h3>GridSettings</h3>
+<pre><code>{
+  borderThickness: number;   // default: 2
+  showLogo: boolean;         // default: true
+  backgroundColor: string;   // default: #f1f5f9
+  cellColor: string;         // default: #ffffff
+  headerColor: string;       // default: #f1f5f9
+  borderColor: string;       // default: #1e293b
+  cellBorderColor: string;   // default: #e2e8f0
+}</code></pre>
+          </div>
+
+          <!-- State Management -->
+          <div class="doc-section" id="doc-state">
+            <h2>State Management</h2>
+            <p>App uses React's <code>useReducer</code> with a custom <code>gameReducer</code>. No external state library.</p>
+
+            <table class="doc-table">
+              <thead><tr><th>Action</th><th>Effect</th></tr></thead>
+              <tbody>
+                <tr><td><code>START_LOADING</code></td><td>Sets loading flag, clears error</td></tr>
+                <tr><td><code>SET_PUZZLE</code></td><td>Resets state with new puzzle data</td></tr>
+                <tr><td><code>ERROR</code></td><td>Stores error message, stops loading</td></tr>
+                <tr><td><code>UPDATE_CELL</code></td><td>Updates a cell value, pushes to undo history</td></tr>
+                <tr><td><code>UNDO / REDO</code></td><td>Navigates the history stack</td></tr>
+                <tr><td><code>CLEAR</code></td><td>Resets grid to empty (undoable)</td></tr>
+                <tr><td><code>SOLVE</code></td><td>Sets the solved grid, marks isSolved</td></tr>
+                <tr><td><code>TOGGLE_CLUE</code></td><td>Flips a clue's completed state</td></tr>
+                <tr><td><code>TICK</code></td><td>Increments timer by 1 second</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Solution Checking</h3>
+            <p><code>checkRelationship(catA, itemA, catB, itemB)</code> determines if two items belong to the same solution row using two strategies:</p>
+            <ol>
+              <li><strong>Key-based</strong>: matches category names to solution keys, then compares values in the same row.</li>
+              <li><strong>Value-only fallback</strong>: checks if both values co-occur in any row regardless of key names.</li>
+            </ol>
+            <p>Both strategies normalize with <code>String(v).trim().toLowerCase()</code>.</p>
+          </div>
+
+          <!-- Prompt Engine -->
+          <div class="doc-section" id="doc-promptengine">
+            <h2>Prompt Engine</h2>
+            <p>The Gemini prompt is stored in <code>services/prompt.md</code> and loaded as a raw string at build time via Vite's <code>?raw</code> import.</p>
+
+            <h3>Template Variables</h3>
+            <table class="doc-table">
+              <thead><tr><th>Variable</th><th>Source</th></tr></thead>
+              <tbody>
+                <tr><td><code>{{topic}}</code></td><td>User input text</td></tr>
+                <tr><td><code>{{difficulty}}</code></td><td>Easy / Medium / Hard</td></tr>
+                <tr><td><code>{{categoryCount}}</code></td><td>Grid size preset</td></tr>
+                <tr><td><code>{{itemCount}}</code></td><td>Grid size preset</td></tr>
+                <tr><td><code>{{clueMin}}</code></td><td>Computed: max(4, floor(n*k * 0.6))</td></tr>
+                <tr><td><code>{{clueMax}}</code></td><td>Computed: ceil(n*k * 1.2)</td></tr>
+                <tr><td><code>{{einsteinInstructions}}</code></td><td>Added for Einstein mode only</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Prompt Structure</h3>
+            <p>The prompt includes difficulty-specific rules, clue quality constraints (precision, atomicity, no redundancy, category coverage), anti-failure guardrails (bridge clues, anchor limits), a 6-step verification protocol, a clue toolbox with templates, and three full worked examples.</p>
+
+            <div class="callout">
+              To modify puzzle generation behavior, edit <code>services/prompt.md</code> directly. No code changes needed.
+            </div>
+          </div>
+
+          <!-- Configuration -->
+          <div class="doc-section" id="doc-config">
+            <h2>Configuration</h2>
+
+            <h3>vite.config.ts</h3>
+            <ul>
+              <li>Dev server: port 3000, host <code>0.0.0.0</code></li>
+              <li>React plugin via <code>@vitejs/plugin-react</code></li>
+              <li>Injects <code>GEMINI_API_KEY</code> / <code>GOOGLE_API_KEY</code> from process env</li>
+              <li>Path alias: <code>@</code> maps to project root</li>
+            </ul>
+
+            <h3>tsconfig.json</h3>
+            <ul>
+              <li>Target: ES2022, Module: ESNext, JSX: react-jsx</li>
+              <li><code>allowImportingTsExtensions: true</code></li>
+              <li><code>noEmit: true</code> (Vite handles compilation)</li>
+            </ul>
+
+            <h3>index.html</h3>
+            <ul>
+              <li>Tailwind CSS from CDN with custom theme colors (<code>#2bee9d</code> primary)</li>
+              <li>Import map for ESM browser loading of <code>@google/genai</code>, <code>react</code>, <code>react-dom</code></li>
+              <li>Custom 4px scrollbar styling</li>
+            </ul>
+          </div>
+
+          <!-- Environment Variables -->
+          <div class="doc-section" id="doc-env">
+            <h2>Environment Variables</h2>
+            <table class="doc-table">
+              <thead><tr><th>Variable</th><th>Where</th><th>Purpose</th></tr></thead>
+              <tbody>
+                <tr><td><code>VITE_GEMINI_API_KEY</code></td><td><code>.env.local</code></td><td>Gemini API key (client-side via import.meta.env)</td></tr>
+                <tr><td><code>GEMINI_API_KEY</code></td><td>Server env</td><td>Injected by vite.config.ts at build time</td></tr>
+                <tr><td><code>GOOGLE_API_KEY</code></td><td>Server env</td><td>Fallback alias for the same key</td></tr>
+              </tbody>
+            </table>
+            <div class="callout">
+              For local development, create <code>.env.local</code> in the project root with <code>VITE_GEMINI_API_KEY=your_key</code>. This file is gitignored.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      LogicGrid AI &middot; Built with React, Vite, and Gemini AI
+    </div>
+  </footer>
+
+  <script>
+    function getPreferredTheme() {
+      const stored = localStorage.getItem('docs-theme');
+      if (stored) return stored;
+      return 'light';
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+      localStorage.setItem('docs-theme', theme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    applyTheme(getPreferredTheme());
+  </script>
+
+</body>
+</html>
